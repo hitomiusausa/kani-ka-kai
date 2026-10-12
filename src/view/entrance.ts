@@ -3,17 +3,14 @@ import { Sound } from '../audio.ts';
 export const speaker = '<svg viewBox="0 0 24 24" class="speaker-icon" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z" fill="currentColor"/><path d="M16 8q5 4 0 8M19 5q8 7 0 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 export const entranceMarkup = `
   <section id="entrance" class="entrance" aria-labelledby="entrance-title">
-    <header class="entrance-top"><span>海辺の選別所 <i>No. 028</i></span><button id="entrance-sound" class="quiet-button" aria-pressed="false">音 あり</button></header>
+    <header class="entrance-top"><span>海辺の選別所</span><button id="entrance-sound" class="quiet-button" aria-pressed="false">音 あり</button></header>
     <div class="entrance-content">
-      <p class="entrance-kicker">本日も、しごとが あります。</p>
       <h1 id="entrance-title">かにかかい<span>。</span></h1>
       <div class="entrance-pair">
-        <button class="specimen" data-word="かに" aria-label="かにの なまえをきく"><span class="specimen-art cover-crab" aria-hidden="true"></span><span class="specimen-name">かに ${speaker}</span></button>
+        <button class="specimen" data-word="かに" aria-label="かにの なまえをきく"><span class="specimen-art cover-crab" aria-hidden="true"></span><span class="specimen-name">かに</span>${speaker}</button>
         <span class="or-word" aria-hidden="true">か、</span>
-        <button class="specimen" data-word="かい" aria-label="かいの なまえをきく"><span class="specimen-art cover-shell"><img src="${import.meta.env.BASE_URL}assets/characters/shell-paper.png" alt="" /></span><span class="specimen-name">かい ${speaker}</span></button>
+        <button class="specimen" data-word="かい" aria-label="かいの なまえをきく"><span class="specimen-art cover-shell"><img src="${import.meta.env.BASE_URL}assets/characters/shell-paper.png" alt="" /></span><span class="specimen-name">かい</span>${speaker}</button>
       </div>
-      <p id="voice-note" class="voice-note" aria-live="polite">絵をおすと、なまえが きこえます。</p>
-      <p class="entrance-story">カニの しわけを おてつだい。<br>しごとが すむと、なにか もらえます。</p>
       <button id="enter" class="primary entrance-start" disabled>係員を よんでいます…</button>
       <p id="entrance-progress" class="entrance-progress"></p><button id="entrance-book" class="book-link">レシピブック <span>↗</span></button>
     </div>
@@ -38,10 +35,8 @@ export class Entrance {
       button.addEventListener('click', () => {
         if (this.transitioning) return;
         const word = button.dataset.word!;
-        const note = document.querySelector('#voice-note')!;
-        note.textContent = this.sound.muted ? `「${word}」。音を聞くときは、右上の「音 なし」をおしてください。` : `「${word}」`;
         this.sound.unlock();
-        if (!this.sound.muted) this.sound.speak(word, () => { if (this.visible) note.textContent = `なまえは「${word}」です。`; });
+        if (!this.sound.muted) this.sound.speak(word, () => {});
         button.classList.add('speaking'); setTimeout(() => button.classList.remove('speaking'), 650);
       });
     });

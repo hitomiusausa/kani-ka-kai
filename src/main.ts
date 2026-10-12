@@ -13,7 +13,7 @@ app.innerHTML = `
   ${entranceMarkup}
   <div class="station" hidden>
     <header class="masthead">
-      <div class="station-number">海辺の選別所<span>No. 028</span></div>
+      <div class="station-number">海辺の選別所</div>
       <h1><button id="home" aria-label="扉ページへもどる">かにかかい<span class="title-dot">。</span></button></h1>
       <button id="sound" class="quiet-button" aria-pressed="false">音 あり</button>
     </header>
@@ -334,9 +334,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { if 
 document.addEventListener('crab-ready', () => { ready = true; entrance.setReady(); if (round.phase === 'ready') { renderedPhase = ''; renderPhase(); } });
 document.addEventListener('crab-load-error', () => {
   panel.innerHTML = '<h2>係員が、迷子です。</h2><p>画像を読み込めませんでした。</p><button class="primary" onclick="location.reload()">よみなおす →</button>';
-  $('#voice-note').textContent = '係員の画像を読み込めませんでした。ページをよみなおしてください。';
 });
-$('#entrance-progress').textContent = progress.collected.some(Boolean) ? `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・つづきは保存されています` : 'おてつだい、募集中。';
+$('#entrance-progress').textContent = progress.collected.some(Boolean) ? `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・つづきは保存されています` : '';
 updateSound(); createRound(progress.collected.every(Boolean) ? 0 : progress.unlocked);
 function loop(now: number) {
   round.tick(now); renderCards(now); renderHUD(); renderPhase(); requestAnimationFrame(loop);
