@@ -58,7 +58,7 @@ npm run preview # ビルド結果を同じローカルURLで確認（devと同�
 
 ゲームは `npm run build` で生成する `dist/` だけで配信できます。公開URLはまだありません。
 
-GitHub Pages用の `.github/workflows/pages.yml` を用意しています。リポジトリでPagesのSourceをGitHub Actionsにすると、`main` の更新時にテスト・ビルド・公開を行います。無料プランで公開リポジトリを使う場合、コードや素材、制作文書も一般公開されます。現時点は公開範囲の確認待ちです。
+GitHub Pages用の `.github/workflows/pages.yml` を用意しています。リポジトリでPagesのSourceをGitHub Actionsにし、Actionsのリポジトリ変数 `PAGES_ENABLED=true` を設定すると、`main` の更新時にテスト・ビルド・公開を行います。無料プランで公開リポジトリを使う場合、コードや素材、制作文書も一般公開されます。現時点は公開範囲の確認待ちです。
 
 サブパスでの確認例：
 

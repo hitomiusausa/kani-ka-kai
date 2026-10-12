@@ -76,7 +76,7 @@ Phaserは初期非表示でCanvasが0pxになる対策として `expandParent: f
 - ひちゃんからGitHub保存と友達に見せるWeb公開の依頼。GitHub CLIは `hitomiusausa` で認証済み。
 - 公開リポジトリ＋GitHub Pages／非公開リポジトリ＋別ホストの選択を質問中。回答前のアップロードは非公開とする。公開URLは未発行。
 - 画像の動的URLをVite `BASE_URL` 対応にした。CSS画像はViteがビルド時に変換する。既存のPlaywrightスクリプトもサブパスを保持する。
-- `.github/workflows/pages.yml` を用意。Pagesを有効にした後、`main` のpushでNode 24.13.0・依存導入・13テスト・ビルド・`dist` の配信を行う。ホストが別ならこの設定を変更する。
+- `.github/workflows/pages.yml` を用意。PagesとActionsのリポジトリ変数 `PAGES_ENABLED=true` を有効にした後、`main` のpushでNode 24.13.0・依存導入・13テスト・ビルド・`dist` の配信を行う。ホストが別ならこの設定を変更する。
 - `.gitignore` に `output/`・`.env*`・`*.local` を追加。スクリーンショット、ローカル設定、node_modules、ビルド出力はGit対象外。
 - `npm test` 13件、`npm run build -- --base=/kani-ka-kai/` 成功。既知のJSサイズ警告のみ。
 - Chromiumで本番ビルドを `http://127.0.0.1:4289/kani-ka-kai/` に配信し、5仕事・料理カード805泡・保存復元・1440×900／390×844表示を確認。画像9件すべて200かつ画像MIME。証拠 `output/playwright/release-local.log`。これはローカル確認であり、公開先・物理スマホ・聴感は未確認。
