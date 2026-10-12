@@ -1,0 +1,54 @@
+async (page) => {
+  const baseURL = new URL('.', page.url()).href;
+  const context = await page.context().browser().newContext({viewport:{width:1440,height:900}});
+  page = await context.newPage();
+  const errors=[]; page.on('pageerror', e=>errors.push(e.message));
+  await page.goto(baseURL);
+  await page.locator('#enter:not(:disabled)').waitFor();
+  await page.locator('.cover-shell img').evaluate(img=>img.decode());
+  await page.screenshot({path:'output/playwright/refine-entrance.png'});
+  if(await page.locator('.station').isVisible()) throw Error('Game shown before entrance');
+  if((await page.locator('#entrance').innerText()).includes('コロッケ')) throw Error('Reward spoiled');
+  for(const word of ['かに','かい']){
+    await page.locator(`[data-word="${word}"]`).click();
+    if(!(await page.locator('#voice-note').innerText()).includes(word)) throw Error('Name feedback missing');
+  }
+  await page.locator('#enter').click();
+  await page.locator('.wave-sheet').evaluate(e=>e.getAnimations().forEach(a=>{a.pause();a.currentTime=180;}));
+  if(await page.locator('#app').getAttribute('data-phase')!=='ready') throw Error('Clock started under wave');
+  await page.screenshot({path:'output/playwright/refine-wave.png'});
+  await page.locator('.wave-sheet').evaluate(e=>e.getAnimations().forEach(a=>a.play()));
+  await page.locator('#app[data-phase=playing]').waitFor();
+  if(Number(await page.locator('#seconds').innerText())<29) throw Error('Wave spent round time');
+  const canvasSize=await page.locator('#crab-stage canvas').boundingBox();
+  if(!canvasSize || canvasSize.width<300 || canvasSize.height<150) throw Error('Crab canvas collapsed after entrance');
+  const kinds = await page.locator('.card').evaluateAll(cards=>cards.map(c=>c.dataset.kind));
+  if(kinds.filter(k=>k==='kani').length!==5) throw Error('Opening balance incorrect');
+  await page.locator('.card[data-kind=kai]:not(:disabled)').first().click();
+  if(await page.locator('#score').innerText()!=='0') throw Error('Negative score at floor');
+  await page.locator('.card[data-kind=kani]:not(:disabled)').first().click();
+  if(await page.locator('.card.cleared').count()!==1) throw Error('Beginner cleared card missing');
+  const remaining=await page.locator('.card').evaluateAll(cards=>cards.map(c=>c.dataset.kind));
+  if(JSON.stringify(kinds)!==JSON.stringify(remaining)) throw Error('Beginner board moved early');
+  await page.locator('.card[data-kind=kai]:not(:disabled)').last().click();
+  if(await page.locator('#score').innerText()!=='5') throw Error('Five bubble deduction missing');
+  await page.screenshot({path:'output/playwright/refine-penalty.png'});
+  await page.locator('#home').click();
+  const seconds=await page.locator('#seconds').innerText();
+  await page.waitForTimeout(1100);
+  if(await page.locator('#seconds').innerText()!==seconds) throw Error('Clock ran on entrance');
+  await page.locator('#enter').click();
+  await page.locator('#app[data-phase=playing]').waitFor();
+  if(await page.locator('#score').innerText()!=='5') throw Error('Resume lost score');
+  if(await page.locator('#panel').isVisible()) throw Error('Resume panel still visible');
+  await page.locator('#pause').click();
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'output/playwright/refine-mobile-game.png',fullPage:true});
+  await page.locator('#home').click();
+  await page.screenshot({path:'output/playwright/refine-mobile-entrance.png',fullPage:true});
+  const width=await page.evaluate(()=>({viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
+  if(width.scroll>width.viewport) throw Error('Entrance overflow');
+  await context.close();
+  if(errors.length) throw Error(errors.join('\n'));
+  return {passed:true,entrance:true,names:true,wave:true,penalty:true,beginnerBalance:true,homeResume:true,mobile:width,errors};
+}

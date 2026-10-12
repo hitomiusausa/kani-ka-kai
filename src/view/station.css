@@ -1,0 +1,89 @@
+/* A paper sorting counter: one centered order, quiet counters, five collected objects. */
+:root{--order-paper:#f5efdf;--order-rule:#b5a389;--station-wash:#e3dac6;--stamp:#97573e}
+.masthead{max-width:1040px;height:88px;padding:18px 34px 12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.masthead h1{font-size:42px;letter-spacing:.08em}
+.station-number{font:10px/1.7 var(--serif);letter-spacing:.16em;border-left:2px solid #ac654d;padding-left:12px}
+.station-number span{font-size:12px;letter-spacing:.14em}
+#sound{justify-self:end;border:1px solid #a2917750;border-radius:20px;padding:7px 14px;font-size:11px}
+.world{max-width:960px;height:192px}
+.job-note{left:34px;top:25px;width:175px;min-width:0;padding:12px 15px 14px;gap:0;transform:rotate(-2deg);border:0;background:#f5efdf;box-shadow:1px 3px 0 #baa88c50}
+.job-note:before{content:"";position:absolute;width:45px;height:11px;left:65px;top:-6px;background:#c6b59570;transform:rotate(3deg)}
+.job-note-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #b2a08665;padding-bottom:7px;margin-bottom:8px}
+.job-note .job-note-top>span:first-child{font:10px var(--serif);letter-spacing:.1em}
+.job-note .job-stamp{font:9px var(--serif);border:1px solid #a96c5360;color:var(--stamp);padding:2px 3px;transform:rotate(4deg)}
+.job-note #stage-number{font:27px/1.2 Georgia,serif;letter-spacing:.03em;color:#514837}
+.job-note #stage-name{font:13px/1.5 var(--serif);letter-spacing:.06em;margin-top:3px}
+.job-note #best{font:10px/1.5 var(--serif);color:#80725e;margin-top:10px}
+#crab-stage{bottom:-4px;height:220px;width:508px}
+.dispenser{right:44px;bottom:20px;width:124px;height:128px;transform:none}
+.hatch-tag{display:flex;justify-content:center;align-items:center;gap:8px;font:11px/1.4 var(--serif);letter-spacing:.25em;padding-bottom:10px}
+.hatch-dot{width:5px;height:5px;background:#807c66;border-radius:50%;box-shadow:0 0 0 3px #aaa18a30}
+.dispenser.open .hatch-dot{background:#a35a3d}
+.hatch{height:80px;border:8px solid #a89f8c;box-shadow:2px 3px 0 #8b816e,inset 0 7px 12px #332c2570}
+.hatch-flap{background:#bcb39f;box-shadow:0 2px 1px #302a2440}
+.desk{min-height:calc(100svh - 280px)}
+.desk-inner{padding-top:16px}
+.game-status{grid-template-columns:1fr 360px 1fr;gap:25px;min-height:112px;align-items:center}
+.instruction{position:relative;isolation:isolate;min-width:0;width:100%;min-height:112px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:12px 23px 13px;gap:5px;filter:drop-shadow(0 3px 0 #8f7e6330)}
+.instruction:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--order-paper) url('/assets/paper-grain.svg');background-blend-mode:soft-light;clip-path:polygon(0 2%,96% 0,100% 12%,99.6% 99%,1% 100%)}
+.instruction:after{content:"";width:30px;height:3px;position:absolute;left:23px;top:0;background:var(--stamp)}
+.order-label{font:11px/1.3 var(--serif);letter-spacing:.2em;color:#796a53;text-align:center}
+.order-subject{display:flex;align-items:center;justify-content:center;gap:23px;min-height:64px}
+.order-art{width:111px;height:69px;display:flex;align-items:center;justify-content:center;border-right:1px solid #bba98d50;padding-right:13px;flex-shrink:0}
+.order-art .paper-kani{flex-shrink:0;width:105px;height:67px;background-size:210px 210px;background-position:0 -24px}
+.order-art .paper-kai{max-width:88px;object-fit:contain}
+.instruction .order-subject strong{font:800 55px/1 var(--serif);letter-spacing:.09em;padding:0;white-space:nowrap;color:#3f382b}
+.order-listen{display:flex;align-items:center;flex-direction:column;gap:1px;min-height:64px;justify-content:center}
+.order-listen .listen-button{padding:3px 5px;gap:11px}
+.order-listen .listen-button>span{font:700 21px/1.3 var(--serif);letter-spacing:.04em}
+.order-listen .speaker-icon{width:29px;height:29px}
+.order-listen .quiet-button{font-size:10px;padding:2px 6px}
+.time,.score{display:flex;flex-direction:column;align-items:flex-start;gap:5px;justify-content:center;color:#5f533f}
+.time .small-label,.score .small-label{font:10px/1.2 var(--serif);letter-spacing:.12em;margin:0}
+.time>div,.score>div{display:flex;align-items:baseline;gap:5px}
+.time strong,.score strong{font:36px/1 Georgia,serif;letter-spacing:-.02em}
+.time>div>span{font-size:11px}.score>div>span{font:18px var(--serif)}
+.score{align-items:flex-end}
+.progress-line{margin-top:17px;height:2px}
+.under-status{height:33px}
+.board.preparing{opacity:.5;pointer-events:none}
+.inventory{min-height:115px;padding:13px 0 0;gap:24px;align-items:center}
+.inventory-label{font:11px/1.6 var(--serif);letter-spacing:.14em;white-space:nowrap;color:#655840}
+.items{gap:15px;align-items:flex-end}
+.item{min-width:64px;gap:3px}
+.item-art{width:66px;height:66px;display:flex;align-items:center;justify-content:center;position:relative}
+.item-art:after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:2px;background:#8f7c5d26;border-radius:50%;z-index:-1}
+.ingredient{display:block;object-fit:contain;width:100%;height:100%;filter:drop-shadow(0 2px 1px #6f583620);pointer-events:none}
+.item>.item-art+span{font:10px/1.3 var(--serif);letter-spacing:.04em;color:#6a5a40}
+.item-art .parcel{width:36px;height:43px;opacity:.36}
+.item:not(.earned)>.item-art+span{font-size:9px;letter-spacing:.15em;opacity:.6}
+#jobs-toggle{font-size:10px;white-space:nowrap;border-bottom:1px solid #8e7c5e55;padding:6px 0}
+#delivery{width:64px;height:69px;bottom:-25px}
+.open #delivery .ingredient{animation:delivery .4s cubic-bezier(.2,.8,.4,1.3)}
+.cooking-bags .ingredient{width:39px;height:43px;transition:transform .5s,opacity .5s}
+.frying .cooking-bags .ingredient{transform:translateY(70px) scale(.3) rotate(35deg);opacity:0}
+.cooking-bags .ingredient:nth-child(2){transition-delay:.12s}.cooking-bags .ingredient:nth-child(3){transition-delay:.24s}.cooking-bags .ingredient:nth-child(4){transition-delay:.36s}.cooking-bags .ingredient:nth-child(5){transition-delay:.48s}
+.is-running .wave-sheet{animation-duration:1.7s}
+.is-fading .wave-sheet{animation-duration:.24s!important}
+@media(min-width:800px) and (max-height:780px){
+ .masthead{height:66px;padding-top:12px;padding-bottom:10px}.masthead h1{font-size:35px}
+ .world{height:148px}#crab-stage{height:179px;width:414px}
+ .job-note{top:5px;padding:9px 13px 10px;width:166px}.job-note #stage-number{font-size:24px}.job-note #best{margin-top:5px}
+ .dispenser{bottom:9px;height:110px;width:112px}.hatch{height:71px}
+ .desk{min-height:calc(100svh - 214px)}.desk-inner{padding-top:12px}
+ .game-status{min-height:98px;grid-template-columns:1fr 330px 1fr}.instruction{min-height:98px;padding:9px 19px}.order-subject{min-height:61px}.instruction .order-subject strong{font-size:48px}
+ .progress-line{margin-top:13px}.inventory{min-height:101px;padding-top:9px}.item-art{height:56px;width:60px}.item{min-width:60px}.footnote{padding-top:7px}
+}
+@media(max-width:700px){
+ .masthead{height:74px;padding:16px 20px;grid-template-columns:1fr auto}.masthead h1{font-size:31px;grid-column:1;grid-row:1;justify-self:start}.station-number{display:none}#sound{grid-column:2;font-size:10px;padding:6px 10px}
+ .world{height:175px}.job-note{left:18px;top:4px;max-width:130px;width:auto;background:none;box-shadow:none;padding:0;transform:none;z-index:1}.job-note:before,.job-note-top,.job-note #best{display:none}.job-note #stage-number{font-size:15px;color:#7e6e54}.job-note #stage-name{font-size:10px;line-height:1.4;margin-top:4px}
+ #crab-stage{height:183px;width:422px;left:42%;bottom:0}.dispenser{right:17px;bottom:18px;width:65px;height:88px}.hatch{height:57px;border-width:5px}.hatch-tag{font-size:9px;gap:5px;padding-bottom:8px;letter-spacing:.12em}.hatch-dot{width:4px;height:4px}.hatch:before,.hatch:after{top:-3px;width:2px;height:2px}#delivery{width:45px;height:50px;bottom:-17px}
+ .desk{min-height:calc(100svh - 249px)}.desk-inner{padding:13px 17px 18px}.game-status{grid-template-columns:1fr 1fr;gap:11px;min-height:0}.instruction{grid-column:1/-1;grid-row:1;min-height:102px;width:min(330px,100%);justify-self:center;padding:11px 21px}.order-subject{min-height:60px;gap:22px}.instruction .order-subject strong{font-size:49px}.order-label{font-size:10px}.order-art{height:63px}.time,.score{grid-row:2;gap:2px;flex-direction:row;align-items:baseline}.time{justify-content:flex-start}.score{justify-content:flex-end}.time .small-label,.score .small-label{font-size:9px;margin-right:5px}.time strong,.score strong{font-size:25px}.time>div>span{font-size:9px}.score>div>span{font-size:14px}.progress-line{margin-top:10px}.under-status{height:29px;font-size:11px}
+ .inventory{flex-wrap:wrap;gap:4px 15px;padding-top:9px;min-height:99px;justify-content:space-between}.inventory-label{display:block;width:100%;font-size:9px;text-align:center;letter-spacing:.12em}.items{justify-content:space-around;width:100%;gap:5px}.item{min-width:0;flex:1;gap:1px}.item-art{width:54px;height:54px}.item>.item-art+span{font-size:9px}.item-art .parcel{height:32px;width:27px}#jobs-toggle{font-size:9px;margin:5px auto 0}.footnote{font-size:8px;padding-top:9px;letter-spacing:0}.below-board{height:29px}
+}
+@media(max-width:359px){.masthead h1{font-size:27px}.order-subject{gap:14px}.instruction .order-subject strong{font-size:44px}.job-note{left:12px}.items{gap:1px}.item-art{width:48px;height:50px}.card{height:60px}}
+/* Keep the complete desk on a 720p desktop without shrinking the main character. */
+@media(min-width:800px) and (max-height:780px){
+ .desk-inner{padding-bottom:12px}.game-status{min-height:95px}.instruction{min-height:95px;padding-top:8px;padding-bottom:8px}.order-subject{min-height:60px}.order-art{height:60px}
+ .board{gap:9px 16px}.card{height:58px}.card .picture{height:50px}.inventory{min-height:87px;padding-top:6px}.item-art{height:51px}.footnote{padding-top:6px}
+}
