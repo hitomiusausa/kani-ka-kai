@@ -4,6 +4,11 @@
 
 ## 遊ぶ
 
+**[ブラウザで遊ぶ](https://hitomiusausa.github.io/kani-ka-kai/)**
+
+コード：[GitHub](https://github.com/hitomiusausa/kani-ka-kai)
+
+
 Macでは **`あそぶ.command` をダブルクリック**すると、ローカルのゲームを開きます。起動中はターミナルを開いたままにしてください。終了はターミナルで `Control + C`。
 
 手動で起動する場合（Node.js 22.12以上推奨。開発・確認環境は24.13.0）：
@@ -54,11 +59,11 @@ npm run preview # ビルド結果を同じローカルURLで確認（devと同�
 
 以前の保存データも引き継ぎます。獲得日・合計泡を記録していなかった料理カードは、その欄を「記録なし」と表示します。
 
-## Web公開の準備
+## Web公開と更新
 
-ゲームは `npm run build` で生成する `dist/` だけで配信できます。公開URLはまだありません。
+ゲームは `npm run build` で生成する `dist/` だけで配信できます。公開先は [GitHub Pages](https://hitomiusausa.github.io/kani-ka-kai/) です。
 
-GitHub Pages用の `.github/workflows/pages.yml` を用意しています。リポジトリでPagesのSourceをGitHub Actionsにし、Actionsのリポジトリ変数 `PAGES_ENABLED=true` を設定すると、`main` の更新時にテスト・ビルド・公開を行います。無料プランで公開リポジトリを使う場合、コードや素材、制作文書も一般公開されます。現時点は公開範囲の確認待ちです。
+GitHub Pages用の `.github/workflows/pages.yml` を用意しています。リポジトリでPagesのSourceをGitHub Actionsにし、Actionsのリポジトリ変数 `PAGES_ENABLED=true` を設定すると、`main` の更新時にテスト・ビルド・公開を行います。無料プランで公開リポジトリを使う場合、コードや素材、制作文書も一般公開されます。当面は公開リポジトリとGitHub Pagesを使用し、作り込んだ段階で別ホストと非公開リポジトリへ移行する方針です。
 
 サブパスでの確認例：
 

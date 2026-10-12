@@ -4,13 +4,14 @@
 
 ## 現在地
 
-**ステージ1＝5つの仕事→料理カード1枚→レシピブックまで、ローカルサンプルを実装・検証済み。** ひちゃんの最新のプレイ評価に合わせ、切り絵の波をゆっくりにし、開始音、素材イラスト、上部デザイン、シルエットのお題、料理カードを追加した。現在の料理は1種類。ステージ2以降・公開・スマホアプリ化は未制作。
+**ステージ1＝5つの仕事→料理カード1枚→レシピブックまで、ブラウザゲームを実装・検証済み。** ひちゃんの最新のプレイ評価に合わせ、切り絵の波をゆっくりにし、開始音、素材イラスト、上部デザイン、シルエットのお題、料理カードを追加した。現在の料理は1種類。ステージ2以降・スマホアプリ化は未制作。GitHub Pagesで初回公開済み。
 
 - 作業フォルダ：`/Users/usausagi/Documents/AI_Playground/Kani ka Kai`
 - URL：**http://127.0.0.1:4288/**。起動済みなら再読み込み。
 - 起動：`あそぶ.command` または `npm run dev`（依存がなければ `npm ci`）。
 - 4173番は別アプリ。停止しない。保存はブラウザとURLごと。
-- Git初期化済み（`main`）。GitHubは非公開で初回アップロード予定。Web公開はリポジトリ公開範囲の回答待ち。
+- GitHub：**https://github.com/hitomiusausa/kani-ka-kai**（`main`、公開）。初回push済み。
+- 公開先：**https://hitomiusausa.github.io/kani-ka-kai/**（HTTPS公開済み）。
 - Node 24.13.0 / Phaser 3.90.0 / TypeScript 5.9.3 / Vite 7.3.1。
 
 ## 最新の合意・デザイン
@@ -74,16 +75,18 @@ Phaserは初期非表示でCanvasが0pxになる対策として `expandParent: f
 ## 2026-10-13：GitHub・Web公開の準備
 
 - ひちゃんからGitHub保存と友達に見せるWeb公開の依頼。GitHub CLIは `hitomiusausa` で認証済み。
-- 公開リポジトリ＋GitHub Pages／非公開リポジトリ＋別ホストの選択を質問中。回答前のアップロードは非公開とする。公開URLは未発行。
+- ひちゃんが「いったんGitHub Pages、作り込んだらGitHubを非公開にして別の方法へ」を選択。非公開で初回push後、公開に切り替え、Pagesを設定。
 - 画像の動的URLをVite `BASE_URL` 対応にした。CSS画像はViteがビルド時に変換する。既存のPlaywrightスクリプトもサブパスを保持する。
 - `.github/workflows/pages.yml` を用意。PagesとActionsのリポジトリ変数 `PAGES_ENABLED=true` を有効にした後、`main` のpushでNode 24.13.0・依存導入・13テスト・ビルド・`dist` の配信を行う。ホストが別ならこの設定を変更する。
 - `.gitignore` に `output/`・`.env*`・`*.local` を追加。スクリーンショット、ローカル設定、node_modules、ビルド出力はGit対象外。
 - `npm test` 13件、`npm run build -- --base=/kani-ka-kai/` 成功。既知のJSサイズ警告のみ。
-- Chromiumで本番ビルドを `http://127.0.0.1:4289/kani-ka-kai/` に配信し、5仕事・料理カード805泡・保存復元・1440×900／390×844表示を確認。画像9件すべて200かつ画像MIME。証拠 `output/playwright/release-local.log`。これはローカル確認であり、公開先・物理スマホ・聴感は未確認。
+- Chromiumで本番ビルドを `http://127.0.0.1:4289/kani-ka-kai/` に配信し、5仕事・料理カード805泡・保存復元・1440×900／390×844表示を確認。画像9件すべて200かつ画像MIME。証拠 `output/playwright/release-local.log`。これはローカル確認。物理スマホ・聴感は未確認。
+- 初回GitHub Actionsのテスト・ビルド・Pages配信成功：`38323306708`。公開URLからHTML・JS・CSS・画像9件の計12ファイルを取得し、200／MIME・ローカルビルドとのバイト一致を確認。
+- 公開URLでもChromiumの5仕事→料理カード805泡→保存復元・PC／スマホ幅を通し確認済み。JSエラーなし、横はみ出しなし。証拠 `output/playwright/release-live.log`。実機・聴感は未確認のまま。
 - 分担はGPT-6.1 Solを使用。Astraは必要時のみとする指定を `CLAUDE.md` に反映。
 
 ## 再開時・次の評価
 
-1. `CLAUDE.md` → 本書 → `DECISIONS.md`、現在のファイルを読む。
+1. `CLAUDE.md` → 本書 → `DECISIONS.md`、現在のGitとファイルを確認。`main` のpushは公開を更新する。
 2. ひちゃんに、波と合図のテンポ、シルエットのお題、材料の絵、料理カードの収集体験を評価してもらう。
-3. 評価に合わせて磨く。ステージ2の料理・新しい問題の種類は次の設計対象。公開先・アプリ化方式は未決。
+3. 評価に合わせて磨く。ステージ2の料理・新しい問題の種類は次の設計対象。公開先は当面GitHub Pages。アプリ化方式は未決。
