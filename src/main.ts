@@ -20,7 +20,7 @@ app.innerHTML = `
     <section class="world" aria-label="カニの係員">
       <div class="job-note"><div class="job-note-top"><span>本日のしごと</span><span class="job-stamp" aria-hidden="true">選別</span></div><span id="stage-number">01 / 05</span><span id="stage-name"></span><span id="best"></span></div>
       <div id="crab-stage" role="img" aria-label="とぼけたカニの係員"></div>
-      <div class="dispenser" aria-label="材料の取り出し口"><div class="hatch"><div class="hatch-hole" aria-hidden="true"></div><div class="hatch-flap" aria-hidden="true"></div><div class="hatch-lip" aria-hidden="true"></div><div id="delivery">${parcel('？')}</div></div></div>
+      <div class="dispenser" aria-label="材料の井戸"><img class="well-art" src="${import.meta.env.BASE_URL}assets/characters/stone-well.webp" alt="" draggable="false" /><div id="delivery">${parcel('？')}</div></div>
     </section>
     <section class="desk">
       <div class="desk-inner">
