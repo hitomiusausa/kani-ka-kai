@@ -9,6 +9,9 @@ import { RecipeBook } from './view/recipe-book.ts';
 import { Entrance, entranceMarkup, speaker } from './view/entrance.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
+function mysterySack() {
+  return `<span class="mystery-sack" aria-hidden="true"><img src="${import.meta.env.BASE_URL}assets/characters/mystery-sack.webp" alt="" draggable="false" /><span>？</span></span>`;
+}
 app.innerHTML = `
   ${entranceMarkup}
   <div class="station" hidden>
@@ -20,7 +23,7 @@ app.innerHTML = `
     <section class="world" aria-label="カニの係員">
       <div class="job-note"><div class="job-note-top"><span>本日のしごと</span><span class="job-stamp" aria-hidden="true">選別</span></div><span id="stage-number">01 / 05</span><span id="stage-name"></span><span id="best"></span></div>
       <div id="crab-stage" role="img" aria-label="とぼけたカニの係員"></div>
-      <div class="dispenser" aria-label="材料の井戸"><img class="well-art" src="${import.meta.env.BASE_URL}assets/characters/stone-well.webp" alt="" draggable="false" /><div id="delivery">${parcel('？')}</div></div>
+      <div class="dispenser" aria-label="材料の井戸"><img class="well-art" src="${import.meta.env.BASE_URL}assets/characters/stone-well.webp" alt="" draggable="false" /><div id="delivery">${mysterySack()}</div></div>
     </section>
     <section class="desk">
       <div class="desk-inner">
@@ -180,7 +183,7 @@ function createRound(stageIndex: number, autoStart = false) {
   $('#stage-number').textContent = `${String(stageIndex + 1).padStart(2, '0')} / 05`;
   updateStageTitle();
   $('#best').textContent = progress.best[stageIndex] ? `きろく ${progress.best[stageIndex]}泡` : '本日も、よろしく。';
-  $('#delivery').innerHTML = parcel('？'); $('.dispenser').classList.remove('open');
+  $('#delivery').innerHTML = mysterySack(); $('.dispenser').classList.remove('open');
   $('#reaction-text').textContent = ''; $('#jobs').hidden = true;
   crab.react('neutral'); updateInventory(); renderInstruction();
   renderCards(performance.now()); renderHUD(); renderPhase();
