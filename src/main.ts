@@ -137,7 +137,7 @@ function renderInstruction() {
       if (selectedSortCard !== null) sortCard(selectedSortCard, bin.dataset.kind as Kind);
     }));
   } else if (round.mode === 'listen' && !speechFallback) {
-    instruction.innerHTML = `<div class="order-label">えらぶ</div><div class="order-listen"><button id="listen" class="listen-button" aria-label="お題を もういちど聞く">${speaker}<span>もういちど きく</span></button><button id="silent-fallback" class="quiet-button">かげで えらぶ</button></div>`;
+    instruction.innerHTML = `<div class="order-label">えらぶ</div><div class="order-listen"><button id="listen" class="listen-button" aria-label="お題を もういちど聞く">${speaker}<span>もういちど きく</span></button><button id="silent-fallback" class="quiet-button">えを しわける</button></div>`;
     $('#listen').addEventListener('click', speakTarget);
     $('#silent-fallback').addEventListener('click', () => { speechFallback = true; updateStageTitle(); renderInstruction(); });
     instruction.setAttribute('aria-label', '声と おなじ絵を えらんでください');
