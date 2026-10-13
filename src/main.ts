@@ -76,7 +76,7 @@ let countdownTimers: number[] = [];
 let cancelCountIn = () => {};
 let lastWrittenScore = -1;
 let selectedSortCard: number | null = null;
-let dragState: { index: number; pointerId: number; startX: number; startY: number; ghost?: HTMLElement; moved: boolean; dropKind?: Kind } | null = null;
+let dragState: { index: number; pointerId: number; startX: number; startY: number; grabX: number; grabY: number; ghost?: HTMLElement; moved: boolean; dropKind?: Kind } | null = null;
 let suppressSortClick = false;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const entrance = new Entrance(sound, () => {
@@ -131,7 +131,7 @@ function renderInstruction() {
   if (key === renderedTarget) return;
   renderedTarget = key;
   if (sortingMode) {
-    instruction.innerHTML = `<div class="order-label">札を いれるところ</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="かにの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><b>かに</b></button><i aria-hidden="true">／</i><button class="sort-bin" data-kind="kai" aria-label="かいの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><b>かい</b></button></div><small class="sort-hint">札を つかんで はこんでね</small>`;
+    instruction.innerHTML = `<div class="order-label">札を いれるところ</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="かにの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><span class="sort-sign"><b>かに</b></span></button><i aria-hidden="true">／</i><button class="sort-bin" data-kind="kai" aria-label="かいの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><span class="sort-sign"><b>かい</b></span></button></div><small class="sort-hint">札を つかんで はこんでね</small>`;
     instruction.setAttribute('aria-label', '絵札をカニか貝の受け皿へ運んでください');
     instruction.querySelectorAll<HTMLButtonElement>('.sort-bin').forEach(bin => bin.addEventListener('click', () => {
       if (selectedSortCard !== null) sortCard(selectedSortCard, bin.dataset.kind as Kind);
@@ -326,7 +326,10 @@ function sortCard(index: number, kind: Kind) {
 function sortMode() { return round.stageIndex === 2 && speechFallback; }
 function onSortPointerDown(index: number, event: PointerEvent) {
   if (!sortMode() || round.phase !== 'playing' || buttons[index].disabled) return;
-  dragState = { index, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+  const rect = buttons[index].getBoundingClientRect();
+  dragState = { index, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
+    grabX: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+    grabY: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)), moved: false };
   try { buttons[index].setPointerCapture(event.pointerId); } catch { /* The pointer may already have left the card. */ }
 }
 function onSortPointerMove(event: PointerEvent) {
@@ -339,7 +342,9 @@ function onSortPointerMove(event: PointerEvent) {
     state.ghost = buttons[state.index].cloneNode(true) as HTMLElement;
     state.ghost.classList.add('drag-ghost'); document.body.append(state.ghost);
   }
-  state.ghost.style.left = `${event.clientX}px`; state.ghost.style.top = `${event.clientY}px`;
+  const ghostRect = state.ghost.getBoundingClientRect();
+  state.ghost.style.left = `${event.clientX - ghostRect.width * state.grabX}px`;
+  state.ghost.style.top = `${event.clientY - ghostRect.height * state.grabY}px`;
   const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('.sort-bin');
   const hit = hovered ?? [...instruction.querySelectorAll<HTMLElement>('.sort-bin')].find(bin => {
     const r = bin.getBoundingClientRect(), padX = r.width * .08, padY = r.height * .08;
