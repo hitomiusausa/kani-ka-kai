@@ -20,7 +20,7 @@ app.innerHTML = `
     <section class="world" aria-label="カニの係員">
       <div class="job-note"><div class="job-note-top"><span>本日のしごと</span><span class="job-stamp" aria-hidden="true">選別</span></div><span id="stage-number">01 / 05</span><span id="stage-name"></span><span id="best"></span></div>
       <div id="crab-stage" role="img" aria-label="とぼけたカニの係員"></div>
-      <div class="dispenser" aria-label="材料の取り出し口"><div class="hatch"><div class="hatch-flap"></div><div id="delivery"></div></div></div>
+      <div class="dispenser" aria-label="材料の取り出し口"><div class="hatch"><div class="hatch-hole" aria-hidden="true"></div><div class="hatch-flap" aria-hidden="true"></div><div class="hatch-lip" aria-hidden="true"></div><div id="delivery">${parcel('？')}</div></div></div>
     </section>
     <section class="desk">
       <div class="desk-inner">
@@ -180,7 +180,7 @@ function createRound(stageIndex: number, autoStart = false) {
   $('#stage-number').textContent = `${String(stageIndex + 1).padStart(2, '0')} / 05`;
   updateStageTitle();
   $('#best').textContent = progress.best[stageIndex] ? `きろく ${progress.best[stageIndex]}泡` : '本日も、よろしく。';
-  $('#delivery').innerHTML = ''; $('.dispenser').classList.remove('open');
+  $('#delivery').innerHTML = parcel('？'); $('.dispenser').classList.remove('open');
   $('#reaction-text').textContent = ''; $('#jobs').hidden = true;
   crab.react('neutral'); updateInventory(); renderInstruction();
   renderCards(performance.now()); renderHUD(); renderPhase();
