@@ -21,6 +21,12 @@
 .dispenser.open .hatch-dot{background:#a35a3d}
 .hatch{height:80px;border:8px solid #a89f8c;box-shadow:2px 3px 0 #8b816e,inset 0 7px 12px #332c2570}
 .hatch-flap{background:#bcb39f;box-shadow:0 2px 1px #302a2440}
+.hatch{border:0;background:#756b59;clip-path:polygon(3% 0,98% 2%,100% 96%,2% 100%,0 5%);box-shadow:none;filter:drop-shadow(0 3px 0 #8b816e) drop-shadow(0 5px 0 #c9b99d)}
+.hatch:before,.hatch:after{width:5px;height:5px;top:5px;background:#dfd2b8;box-shadow:0 1px 0 #756b59;border-radius:0;z-index:4}
+.hatch:before{left:5px}.hatch:after{right:5px}
+.hatch-flap{inset:0 0 24%;background:linear-gradient(135deg,#ddd1b8 0%,#c9baa0 58%,#b5a487 100%);clip-path:polygon(2% 0,100% 2%,98% 100%,0 94%);box-shadow:0 4px 0 #a59579}
+.pot{background:linear-gradient(110deg,#9c7657 0%,#b48e68 48%,#89674e 100%);border-top:7px solid #d1b992;box-shadow:inset -10px -5px 0 #795b45,0 3px 0 #c4b294;filter:drop-shadow(0 3px 1px #40342435)}
+.pot:before,.pot:after{border-color:#967454}
 .desk{min-height:calc(100svh - 280px)}
 .desk-inner{padding-top:16px}
 .game-status{grid-template-columns:1fr 360px 1fr;gap:25px;min-height:112px;align-items:center}

@@ -17,7 +17,10 @@ export class Sound {
   }
   pop() { this.tone(360, 860, .09, .11); }
   wrong() { this.tone(140, 100, .07, .045, 'triangle'); }
-  drop() { this.tone(190, 65, .15, .13, 'triangle'); }
+  drop() {
+    this.tone(420, 880, .11, .11, 'triangle');
+    window.setTimeout(() => this.tone(660, 1320, .14, .12, 'sine'), 65);
+  }
   stamp() { this.tone(450, 220, .065, .08, 'triangle'); }
   /** Three evenly spaced cues and a higher GO. Audio clock keeps the rhythm steady. */
   countIn() {

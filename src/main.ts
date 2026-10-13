@@ -20,7 +20,7 @@ app.innerHTML = `
     <section class="world" aria-label="カニの係員">
       <div class="job-note"><div class="job-note-top"><span>本日のしごと</span><span class="job-stamp" aria-hidden="true">選別</span></div><span id="stage-number">01 / 05</span><span id="stage-name"></span><span id="best"></span></div>
       <div id="crab-stage" role="img" aria-label="とぼけたカニの係員"></div>
-      <div class="dispenser" aria-label="材料の取り出し口"><span class="hatch-tag"><span class="hatch-dot" aria-hidden="true"></span>支給口</span><div class="hatch"><div class="hatch-flap"></div><div id="delivery"></div></div></div>
+      <div class="dispenser" aria-label="材料の取り出し口"><div class="hatch"><div class="hatch-flap"></div><div id="delivery"></div></div></div>
     </section>
     <section class="desk">
       <div class="desk-inner">
@@ -41,6 +41,7 @@ app.innerHTML = `
       </div>
     </section>
   </div>
+  <div id="countdown" class="countdown" aria-hidden="true"></div>
   <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
 `;
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -68,6 +69,7 @@ let ready = false;
 let ending = false;
 let preparing = false;
 let preparationTimer = 0;
+let countdownTimers: number[] = [];
 let cancelCountIn = () => {};
 let lastWrittenScore = -1;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -185,7 +187,9 @@ function createRound(stageIndex: number, autoStart = false) {
   if (autoStart) start();
 }
 function cancelPreparation() {
-  window.clearTimeout(preparationTimer); cancelCountIn(); preparing = false;
+  window.clearTimeout(preparationTimer); countdownTimers.forEach(window.clearTimeout); countdownTimers = [];
+  $('#countdown').textContent = ''; $('#countdown').classList.remove('countdown-pop');
+  cancelCountIn(); preparing = false;
   $('.station').inert = false; board.classList.remove('preparing');
 }
 function prepare(begin: () => void) {
@@ -196,6 +200,14 @@ function prepare(begin: () => void) {
   $('.station').inert = true; app.dataset.phase = 'countdown';
   announce('まもなく、しごとが はじまります。');
   cancelCountIn = sound.countIn();
+  [3, 2, 1].forEach((number, index) => {
+    countdownTimers.push(window.setTimeout(() => {
+      if (!preparing) return;
+      const counter = $('#countdown');
+      counter.textContent = String(number);
+      counter.classList.remove('countdown-pop'); void counter.offsetWidth; counter.classList.add('countdown-pop');
+    }, index * 750));
+  });
   preparationTimer = window.setTimeout(() => {
     cancelPreparation(); begin();
   }, 2550);
