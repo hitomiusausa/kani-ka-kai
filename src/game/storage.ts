@@ -1,8 +1,8 @@
 import { STAGES } from './model.ts';
 export interface RecipeRecord { id: 'crab-cream'; acquiredAt: string | null; bubbles: number | null; materials: string[] }
-export interface Progress { version: 1; unlocked: number; collected: boolean[]; best: number[]; muted: boolean; endingSeen: boolean; earnedScores: (number | null)[]; recipes: RecipeRecord[] }
+export interface Progress { version: 1; unlocked: number; collected: boolean[]; best: number[]; muted: boolean; endingSeen: boolean; earnedScores: (number | null)[]; recipes: RecipeRecord[]; bubbleBank: number }
 export const SAVE_KEY = 'kani-ka-kai.progress.v1';
-export const freshProgress = (): Progress => ({ version: 1, unlocked: 0, collected: Array(5).fill(false), best: Array(5).fill(0), muted: false, endingSeen: false, earnedScores: Array(5).fill(null), recipes: [] });
+export const freshProgress = (): Progress => ({ version: 1, unlocked: 0, collected: Array(5).fill(false), best: Array(5).fill(0), muted: false, endingSeen: false, earnedScores: Array(5).fill(null), recipes: [], bubbleBank: 0 });
 export function parseProgress(raw: string | null): Progress {
   const fallback = freshProgress();
   if (!raw) return fallback;
@@ -15,6 +15,7 @@ export function parseProgress(raw: string | null): Progress {
     fallback.unlocked = Math.min(4, fallback.collected.filter(Boolean).length);
     fallback.best = STAGES.map((_, i) => Number.isInteger(p.best[i]) && p.best[i] >= 0 && p.best[i] < 1_000_000 ? p.best[i] : 0);
     fallback.muted = p.muted === true;
+    fallback.bubbleBank = Number.isInteger(p.bubbleBank) && p.bubbleBank >= 0 && p.bubbleBank < 10_000_000 ? p.bubbleBank : 0;
     fallback.endingSeen = p.endingSeen === true && fallback.collected.every(Boolean);
     fallback.earnedScores = STAGES.map((_, i) => fallback.collected[i] && Number.isInteger(p.earnedScores?.[i]) && p.earnedScores[i] >= STAGES[i].goal && p.earnedScores[i] < 1_000_000 ? p.earnedScores[i] : null);
     if (fallback.endingSeen) {
@@ -31,6 +32,11 @@ export function loadProgress(): Progress {
 }
 export function saveProgress(progress: Progress): boolean {
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); return true; } catch { return false; }
+}
+
+/** Add the score from one finished extra job; old banked bubbles are never spent or penalized. */
+export function bankBubbles(progress: Progress, earned: number) {
+  if (Number.isInteger(earned) && earned > 0 && progress.bubbleBank + earned < 10_000_000) progress.bubbleBank += earned;
 }
 
 /** First completion is the collection record; replays never rewrite its date or score. */

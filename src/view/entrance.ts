@@ -28,6 +28,7 @@ export class Entrance {
   private enterButton = document.querySelector<HTMLButtonElement>('#enter')!;
   private wave = document.querySelector<HTMLElement>('#wave-transition')!;
   private canEnter = false;
+  private readyLabel = 'しごとを はじめる';
   constructor(private sound: Sound, private reveal: () => void, private begin: () => void) {
     this.station.hidden = true;
     this.enterButton.addEventListener('click', () => this.enter());
@@ -41,32 +42,38 @@ export class Entrance {
       });
     });
   }
-  setReady() { this.canEnter = true; this.enterButton.disabled = false; this.enterButton.innerHTML = 'しごとを はじめる <span>→</span>'; }
+  setReady(label = this.readyLabel) { this.canEnter = true; this.readyLabel = label; this.enterButton.disabled = false; this.enterButton.innerHTML = `${this.readyLabel} <span>→</span>`; }
   show(resuming: boolean) {
     if (this.transitioning) return;
     this.sound.cancelSpeech(); this.visible = true;
     this.section.hidden = false; this.station.hidden = true;
-    this.enterButton.innerHTML = `${resuming ? 'しごとに もどる' : 'しごとを はじめる'} <span>→</span>`;
+    this.enterButton.innerHTML = `${resuming ? 'しごとに もどる' : this.readyLabel} <span>→</span>`;
     this.enterButton.disabled = !this.canEnter;
     this.enterButton.focus({ preventScroll: true });
   }
+  revealStation() {
+    this.section.hidden = true; this.station.hidden = false; this.visible = false;
+    this.reveal();
+  }
   private enter() {
     if (!this.canEnter || this.transitioning) return;
-    this.transitioning = true; this.enterButton.disabled = true;
+    this.enterButton.disabled = true;
+    this.travel(() => this.revealStation(), () => this.begin());
+  }
+  travel(covered: () => void, finished: () => void = () => {}) {
+    if (this.transitioning) return;
+    this.transitioning = true;
     this.section.inert = true; this.station.inert = true;
     this.sound.unlock(); this.sound.cancelSpeech(); this.sound.wave();
     this.wave.classList.add(this.reduced ? 'is-fading' : 'is-running');
     const coverTime = this.reduced ? 100 : 680;
     const finishTime = this.reduced ? 240 : 1700;
-    setTimeout(() => {
-      this.section.hidden = true; this.station.hidden = false; this.visible = false;
-      this.reveal();
-    }, coverTime);
+    setTimeout(covered, coverTime);
     setTimeout(() => {
       this.wave.classList.remove('is-running', 'is-fading');
       this.section.inert = false; this.station.inert = false; this.transitioning = false;
       this.enterButton.disabled = false;
-      this.begin();
+      finished();
     }, finishTime);
   }
 }

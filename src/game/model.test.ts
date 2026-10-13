@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Round, DURATION, STAGES } from './model.ts';
-import { parseProgress, freshProgress, collectRecipe } from './storage.ts';
+import { parseProgress, freshProgress, collectRecipe, bankBubbles } from './storage.ts';
 
 const seeded = () => { let n = 17; return () => { n = (n * 16807) % 2147483647; return n / 2147483647; }; };
 function availableTarget(r: Round, now: number) { return r.cards.findIndex(c => c.kind === r.target && !c.collected && c.availableAt <= now); }
@@ -157,4 +157,13 @@ test('invalid recipe metadata is never trusted or used to unlock a card', () => 
   const record = parseProgress(JSON.stringify(p)).recipes[0];
   assert.equal(record.acquiredAt, null); assert.equal(record.bubbles, null);
   assert.deepEqual(record.materials, STAGES.map(s => s.item));
+});
+
+test('extra-work bubbles accumulate on completion without reducing the saved bank', () => {
+  const p = freshProgress(); p.bubbleBank = 37;
+  bankBubbles(p, 55); assert.equal(p.bubbleBank, 92);
+  bankBubbles(p, 0); bankBubbles(p, -5); bankBubbles(p, 1.5);
+  assert.equal(p.bubbleBank, 92);
+  assert.equal(parseProgress(JSON.stringify(p)).bubbleBank, 92);
+  assert.equal(parseProgress(JSON.stringify({ ...p, bubbleBank: -1 })).bubbleBank, 0);
 });

@@ -1,12 +1,13 @@
 import './style.css';
 import './view/station.css';
 import { Round, STAGES, WORD, type Kind } from './game/model.ts';
-import { loadProgress, saveProgress, collectRecipe } from './game/storage.ts';
+import { loadProgress, saveProgress, collectRecipe, bankBubbles } from './game/storage.ts';
 import { Sound } from './audio.ts';
 import { mountCrab } from './view/crab.ts';
 import { picture, paperPicture, parcel, ingredient } from './view/icons.ts';
 import { RecipeBook } from './view/recipe-book.ts';
 import { Entrance, entranceMarkup, speaker } from './view/entrance.ts';
+import { journeyMarkup, chapterChoices, mapScreen, regionPreview, jobBoard, extraWorkResult } from './view/journey.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 function mysterySack() {
@@ -44,6 +45,7 @@ app.innerHTML = `
       </div>
     </section>
   </div>
+  ${journeyMarkup}
   <div id="countdown" class="countdown" aria-hidden="true"></div>
   <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
 `;
@@ -78,6 +80,7 @@ let lastWrittenScore = -1;
 let selectedSortCard: number | null = null;
 let dragState: { index: number; pointerId: number; startX: number; startY: number; grabX: number; grabY: number; ghost?: HTMLElement; moved: boolean; dropKind?: Kind } | null = null;
 let suppressSortClick = false;
+let extraWorkRound = false;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const entrance = new Entrance(sound, () => {
   // Reveal the playfield under the wave, without spending any round time.
@@ -91,8 +94,9 @@ const entrance = new Entrance(sound, () => {
     if (round.phase === 'paused') {
       round.resume(performance.now()); renderPhase(); renderCards(performance.now());
       if (round.mode === 'listen' && !speechFallback) speakTarget();
-    } else startImmediately();
-    buttons.find(b => !b.disabled)?.focus({ preventScroll: true });
+      buttons.find(b => !b.disabled)?.focus({ preventScroll: true });
+    } else if (progress.endingSeen && progress.collected.every(Boolean)) { showChapterChoices(); return; }
+    else startImmediately();
   });
 });
 
@@ -122,7 +126,7 @@ function updateInventory() {
   $('#items').innerHTML = STAGES.map((s, i) => `<div class="item ${progress.collected[i] ? 'earned' : ''}" aria-label="${progress.collected[i] ? s.item : 'まだ ひみつ'}"><span class="item-art">${progress.collected[i] ? ingredient(i) : parcel('？')}</span><span>${progress.collected[i] ? s.item : '？？？'}</span></div>`).join('');
   $('#jobs').innerHTML = STAGES.map((s, i) => `<button class="job-choice ${i === round.stageIndex ? 'selected' : ''}" data-stage="${i}" ${i > progress.unlocked ? 'disabled' : ''}>${String(i + 1).padStart(2, '0')}<span>${i <= progress.unlocked ? stageTitle(i) : 'ひみつ'}</span>${progress.collected[i] ? '<small>済</small>' : ''}</button>`).join('');
   $('#jobs').querySelectorAll<HTMLButtonElement>('button').forEach(b => b.addEventListener('click', () => {
-    $('#jobs').hidden = true; createRound(Number(b.dataset.stage));
+    $('#jobs').hidden = true; createRound(Number(b.dataset.stage), false, progress.collected.every(Boolean));
   }));
 }
 function renderInstruction() {
@@ -184,16 +188,71 @@ function renderHUD() {
   $('#pause').hidden = round.phase !== 'playing';
   $('#jobs-toggle').hidden = round.phase === 'playing' || round.phase === 'paused';
 }
-function createRound(stageIndex: number, autoStart = false) {
+const journeyScreen = $('#journey-screen');
+const journeyContent = $('#journey-content');
+function showJourney(markup: string) {
+  $('.station').hidden = true; $('#entrance').hidden = true;
+  journeyContent.innerHTML = markup; journeyScreen.hidden = false; journeyScreen.inert = false;
+  journeyContent.querySelector<HTMLButtonElement>('[data-journey]')?.focus({ preventScroll: true });
+}
+function showChapterChoices() { showJourney(chapterChoices(progress.bubbleBank)); announce('5つの仕事が おわりました。つぎにすることを えらんでください。'); }
+function showMap() { showJourney(mapScreen(progress.bubbleBank)); announce('地図から 仕事場を えらんでください。'); }
+function showRegionPreview() { showJourney(regionPreview()); announce('南の島。椰子蟹の収集所。仕事札は準備中です。'); }
+function showJobBoard() {
+  showJourney(jobBoard(STAGES.map((_, i) => stageTitle(i, i === 2 && sound.muted)), progress.best, progress.bubbleBank));
+  announce('もう少し働く仕事を ひとつえらんでください。');
+}
+function restForToday() {
+  persist(); journeyScreen.hidden = true; journeyScreen.inert = true;
+  $('#entrance-progress').textContent = `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・ためた泡 ${progress.bubbleBank}`;
+  entrance.setReady('つづきを ひらく');
+  entrance.show(false);
+}
+function travelToWork(action: () => void) {
+  journeyScreen.inert = true;
+  entrance.travel(() => {
+    journeyScreen.hidden = true;
+    entrance.revealStation();
+  }, () => {
+    journeyScreen.inert = false;
+    action();
+  });
+}
+function playExtraJob(stageIndex: number) {
+  travelToWork(() => createRound(stageIndex, true, true));
+}
+function bindJourneyActions() {
+  journeyScreen.addEventListener('click', event => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-journey]');
+    if (!button || entrance.transitioning) return;
+    const action = button.dataset.journey!;
+    if (action === 'map') showMap();
+    else if (action === 'jobs') showJobBoard();
+    else if (action === 'rest') restForToday();
+    else if (action === 'choices') showChapterChoices();
+    else if (action === 'region-seaside') travelToWork(showJobBoard);
+    else if (action === 'region-south') {
+      journeyScreen.inert = true;
+      entrance.travel(showRegionPreview, () => { journeyScreen.inert = false; });
+    } else if (action.startsWith('job-')) {
+      const stageIndex = Number(action.slice(4));
+      if (Number.isInteger(stageIndex) && stageIndex >= 0 && stageIndex < STAGES.length) playExtraJob(stageIndex);
+    } else if (action === 'recipe') book.open(true);
+  });
+}
+bindJourneyActions();
+
+function createRound(stageIndex: number, autoStart = false, extraWork = false) {
   cancelPreparation(); clearEnding(); sound.cancelSpeech();
-  round = new Round(stageIndex); processed = false; speechFallback = sound.muted;
+  round = new Round(stageIndex); processed = false; speechFallback = sound.muted; extraWorkRound = extraWork;
   selectedSortCard = null; dragState = null;
   renderedTarget = ''; renderedPhase = ''; lastSecond = -1; lastWrittenScore = -1;
   buttons.forEach(b => { b.dataset.key = ''; b.classList.remove('picked', 'wrong', 'cleared'); b.getAnimations().forEach(a => a.cancel()); });
   $('#stage-number').textContent = `${String(stageIndex + 1).padStart(2, '0')} / 05`;
   updateStageTitle();
   $('#best').textContent = progress.best[stageIndex] ? `きろく ${progress.best[stageIndex]}泡` : '本日も、よろしく。';
-  $('#delivery').innerHTML = mysterySack(); $('.dispenser').classList.remove('open');
+  $('#delivery').innerHTML = extraWork && progress.collected[stageIndex] ? ingredient(stageIndex) : mysterySack();
+  $('.dispenser').classList.toggle('open', extraWork && progress.collected[stageIndex]);
   $('#reaction-text').textContent = ''; $('#jobs').hidden = true;
   crab.react('neutral'); updateInventory(); renderInstruction();
   renderCards(performance.now()); renderHUD(); renderPhase();
@@ -233,6 +292,7 @@ function startImmediately() {
   if (!ready) return;
   sound.unlock(); firstInput = false;
   round.start(performance.now()); renderPhase(); renderCards(performance.now());
+  buttons.find(b => !b.disabled)?.focus({ preventScroll: true });
   if (document.hidden) { round.pause(performance.now()); renderPhase(); }
   if (round.mode === 'listen' && !speechFallback) speakTarget();
   announce(`${stageTitle(round.stageIndex, speechFallback)}。${round.stage.goal}泡を あつめてください。`);
@@ -261,10 +321,13 @@ function renderPhase() {
 }
 function showResult() {
   sound.cancelSpeech();
+  const replay = extraWorkRound;
   if (!processed) {
     processed = true;
     progress.best[round.stageIndex] = Math.max(progress.best[round.stageIndex], round.score);
-    if (round.reached) {
+    if (replay) {
+      bankBubbles(progress, round.score);
+    } else if (round.reached) {
       if (!progress.collected[round.stageIndex]) progress.earnedScores[round.stageIndex] = round.score;
       progress.collected[round.stageIndex] = true;
       progress.unlocked = Math.max(progress.unlocked, Math.min(4, round.stageIndex + 1));
@@ -273,6 +336,12 @@ function showResult() {
       crab.react('reward'); sound.drop();
     } else crab.react('wrong');
     persist(); updateInventory();
+  }
+  if (replay) {
+    extraWorkRound = false;
+    showJourney(extraWorkResult(round.score, progress.bubbleBank));
+    announce(`ひと仕事 おしまい。${round.score}泡を ためました。`);
+    return;
   }
   const done = round.reached, all = progress.collected.every(Boolean);
   panel.innerHTML = `<span class="eyebrow">${done ? '選別完了' : 'もう ひとしごと'}</span><h2 class="result-score">${round.score}<span>泡</span></h2><p>${done ? `${round.stage.item}を 支給します。` : `あと ${round.stage.goal - round.score}泡。カニは、まっています。`}</p><div class="result-actions"><button id="result-main" class="primary">${done ? all ? 'なにが できる？' : 'つぎの しごと' : 'もういちど'}<span>→</span></button>${done ? '<button id="retry" class="quiet-button">もういちど</button>' : ''}</div><small>きろく ${progress.best[round.stageIndex]}泡</small>`;
@@ -382,12 +451,9 @@ function showEnding() {
     $('.cooking').classList.add('cooked'); $('#ending-title').textContent = 'かにクリームコロッケ。';
     $('#ending-caption').textContent = 'あついうちに、どうぞ。';
     $('#ending-skip').remove();
-    const b = document.createElement('button'); b.className = 'primary'; b.textContent = 'また、ひとしごと →'; panel.append(b);
-    b.addEventListener('click', () => createRound(0));
     progress.endingSeen = true; collectRecipe(progress); persist(); crab.react('reward'); sound.drop();
-    const cardButton = document.createElement('button'); cardButton.id = 'view-recipe'; cardButton.className = 'book-link'; cardButton.textContent = 'レシピカードを みる ↗';
-    panel.append(cardButton); cardButton.addEventListener('click', () => book.open(true));
     announce('かにクリームコロッケが完成。あついうちに、どうぞ。');
+    showChapterChoices();
   };
   $('#ending-skip').addEventListener('click', complete, { once: true });
   endingTimers.push(window.setTimeout(() => { $('.cooking').classList.add('frying'); sound.sizzle(); }, reduced ? 150 : 1100));
@@ -426,7 +492,8 @@ $('#home').addEventListener('click', () => {
   if (entrance.transitioning) return;
   round.pause(performance.now()); renderPhase();
   if (round.phase === 'result' || ending) createRound(progress.collected.every(Boolean) ? 0 : progress.unlocked);
-  $('#entrance-progress').textContent = `あつめたもの ${progress.collected.filter(Boolean).length} / 5`;
+  $('#entrance-progress').textContent = `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・ためた泡 ${progress.bubbleBank}`;
+  entrance.setReady(progress.endingSeen && progress.collected.every(Boolean) ? 'つづきを ひらく' : 'しごとを はじめる');
   entrance.show(round.phase === 'paused');
 });
 $('#pause').addEventListener('click', () => { round.pause(performance.now()); renderPhase(); });
@@ -439,11 +506,11 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && round.phase === 'playing') { round.pause(performance.now()); renderPhase(); }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { if (preparing) { cancelPreparation(); renderedPhase = ''; } round.pause(performance.now()); renderPhase(); sound.cancelSpeech(); } });
-document.addEventListener('crab-ready', () => { ready = true; entrance.setReady(); if (round.phase === 'ready') { renderedPhase = ''; renderPhase(); } });
+document.addEventListener('crab-ready', () => { ready = true; entrance.setReady(progress.endingSeen && progress.collected.every(Boolean) ? 'つづきを ひらく' : 'しごとを はじめる'); if (round.phase === 'ready') { renderedPhase = ''; renderPhase(); } });
 document.addEventListener('crab-load-error', () => {
   panel.innerHTML = '<h2>係員が、迷子です。</h2><p>画像を読み込めませんでした。</p><button class="primary" onclick="location.reload()">よみなおす →</button>';
 });
-$('#entrance-progress').textContent = progress.collected.some(Boolean) ? `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・つづきは保存されています` : '';
+$('#entrance-progress').textContent = progress.collected.some(Boolean) ? `あつめたもの ${progress.collected.filter(Boolean).length} / 5 ・ためた泡 ${progress.bubbleBank}` : '';
 updateSound(); createRound(progress.collected.every(Boolean) ? 0 : progress.unlocked);
 function loop(now: number) {
   round.tick(now); renderCards(now); renderHUD(); renderPhase(); requestAnimationFrame(loop);
