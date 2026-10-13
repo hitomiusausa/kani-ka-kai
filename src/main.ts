@@ -131,7 +131,7 @@ function renderInstruction() {
   if (key === renderedTarget) return;
   renderedTarget = key;
   if (sortingMode) {
-    instruction.innerHTML = `<div class="order-label">えを しわける</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="カニの受け皿"><span>${paperPicture('kani')}</span><b>かに</b></button><i aria-hidden="true">→</i><button class="sort-bin" data-kind="kai" aria-label="貝の受け皿"><span>${paperPicture('kai')}</span><b>かい</b></button></div><small class="sort-hint">札を運ぶ／札を選んでから受け皿を押す</small>`;
+    instruction.innerHTML = `<div class="order-label">札を いれるところ</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="カニを入れるところ"><span>${paperPicture('kani')}</span><b>かに</b><small>ここへ いれる</small></button><i aria-hidden="true">／</i><button class="sort-bin" data-kind="kai" aria-label="貝を入れるところ"><span>${paperPicture('kai')}</span><b>かい</b><small>ここへ いれる</small></button></div><small class="sort-hint">札を つかんで はこんでね</small>`;
     instruction.setAttribute('aria-label', '絵札をカニか貝の受け皿へ運んでください');
     instruction.querySelectorAll<HTMLButtonElement>('.sort-bin').forEach(bin => bin.addEventListener('click', () => {
       if (selectedSortCard !== null) sortCard(selectedSortCard, bin.dataset.kind as Kind);
