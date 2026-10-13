@@ -1,6 +1,6 @@
 import './style.css';
 import './view/station.css';
-import { Round, STAGES, WORD, DURATION, type Kind } from './game/model.ts';
+import { Round, STAGES, WORD, type Kind } from './game/model.ts';
 import { loadProgress, saveProgress, collectRecipe } from './game/storage.ts';
 import { Sound } from './audio.ts';
 import { mountCrab } from './view/crab.ts';
@@ -25,11 +25,10 @@ app.innerHTML = `
     <section class="desk">
       <div class="desk-inner">
         <div class="game-status">
-          <div class="time"><span class="small-label">のこり</span><div><strong id="seconds">30</strong><span>びょう</span></div></div>
+          <div class="time"><span class="small-label">のこり</span><div><strong id="seconds">25</strong><span>びょう</span></div></div>
           <div id="instruction" class="instruction"></div>
           <div class="score"><span class="small-label">あつめた泡</span><div><strong id="score">0</strong><span>泡</span></div></div>
         </div>
-        <div class="progress-line"><div id="time-fill"></div></div>
         <div class="under-status"><span id="goal"></span><button id="pause" class="quiet-button" hidden>ひとやすみ</button></div>
         <div class="board-wrap">
           <div id="board" class="board" aria-label="選別する札"></div>
@@ -105,9 +104,15 @@ function say(text: string) {
   announcementTimer = window.setTimeout(() => { $('#reaction-text').textContent = ''; }, 1600);
 }
 function announce(text: string) { $('#announcer').textContent = text; }
+function stageTitle(index: number, silent = index === 2 && sound.muted) {
+  return index === 2 && silent ? 'かげを さがす' : STAGES[index].title;
+}
+function updateStageTitle() {
+  $('#stage-name').textContent = stageTitle(round.stageIndex, round.stageIndex === 2 && speechFallback);
+}
 function updateInventory() {
   $('#items').innerHTML = STAGES.map((s, i) => `<div class="item ${progress.collected[i] ? 'earned' : ''}" aria-label="${progress.collected[i] ? s.item : 'まだ ひみつ'}"><span class="item-art">${progress.collected[i] ? ingredient(i) : parcel('？')}</span><span>${progress.collected[i] ? s.item : '？？？'}</span></div>`).join('');
-  $('#jobs').innerHTML = STAGES.map((s, i) => `<button class="job-choice ${i === round.stageIndex ? 'selected' : ''}" data-stage="${i}" ${i > progress.unlocked ? 'disabled' : ''}>${String(i + 1).padStart(2, '0')}<span>${i <= progress.unlocked ? s.title : 'ひみつ'}</span>${progress.collected[i] ? '<small>済</small>' : ''}</button>`).join('');
+  $('#jobs').innerHTML = STAGES.map((s, i) => `<button class="job-choice ${i === round.stageIndex ? 'selected' : ''}" data-stage="${i}" ${i > progress.unlocked ? 'disabled' : ''}>${String(i + 1).padStart(2, '0')}<span>${i <= progress.unlocked ? stageTitle(i) : 'ひみつ'}</span>${progress.collected[i] ? '<small>済</small>' : ''}</button>`).join('');
   $('#jobs').querySelectorAll<HTMLButtonElement>('button').forEach(b => b.addEventListener('click', () => {
     $('#jobs').hidden = true; createRound(Number(b.dataset.stage));
   }));
@@ -117,10 +122,13 @@ function renderInstruction() {
   if (key === renderedTarget) return;
   renderedTarget = key;
   if (round.mode === 'listen' && !speechFallback) {
-    instruction.innerHTML = `<div class="order-label">えらぶ</div><div class="order-listen"><button id="listen" class="listen-button" aria-label="お題を もういちど聞く">${speaker}<span>もういちど きく</span></button><button id="show-word" class="quiet-button">文字でみる</button></div>`;
+    instruction.innerHTML = `<div class="order-label">えらぶ</div><div class="order-listen"><button id="listen" class="listen-button" aria-label="お題を もういちど聞く">${speaker}<span>もういちど きく</span></button><button id="silent-fallback" class="quiet-button">かげで えらぶ</button></div>`;
     $('#listen').addEventListener('click', speakTarget);
-    $('#show-word').addEventListener('click', () => { speechFallback = true; renderInstruction(); });
+    $('#silent-fallback').addEventListener('click', () => { speechFallback = true; updateStageTitle(); renderInstruction(); });
     instruction.setAttribute('aria-label', '声と おなじ絵を えらんでください');
+  } else if (round.stageIndex === 2 && speechFallback) {
+    instruction.innerHTML = `<div class="order-label">かげを さがす</div><div class="shadow-cue" aria-hidden="true">${paperPicture(round.target)}</div>`;
+    instruction.setAttribute('aria-label', '影と おなじ形の絵を えらんでください');
   } else {
     instruction.innerHTML = round.mode === 'words'
       ? `<div class="order-label">えらぶ</div><div class="cue-pair">${(['kani', 'kai'] as Kind[]).map(kind => `<span class="cue-specimen ${kind === round.target ? 'is-target' : 'is-silhouette'}" aria-hidden="true">${paperPicture(kind)}</span>`).join('')}</div>`
@@ -131,7 +139,7 @@ function renderInstruction() {
 }
 function speakTarget() {
   sound.unlock();
-  sound.speak(WORD[round.target], () => { speechFallback = true; renderInstruction(); });
+  sound.speak(WORD[round.target], () => { speechFallback = true; updateStageTitle(); renderInstruction(); });
 }
 function renderCards(now: number) {
   buttons.forEach((b, i) => {
@@ -155,7 +163,6 @@ function renderHUD() {
   const secs = Math.ceil(round.remaining / 1000);
   if (secs !== lastSecond) { $('#seconds').textContent = String(secs); lastSecond = secs; }
   if (lastWrittenScore !== round.score) { $('#score').textContent = String(round.score); lastWrittenScore = round.score; }
-  $('#time-fill').style.transform = `scaleX(${round.remaining / DURATION})`;
   $('.time').classList.toggle('urgent', secs <= 5 && round.phase === 'playing');
   goal.textContent = round.reached ? '支給できます。' : `あと ${round.stage.goal - round.score}泡`;
   goal.classList.toggle('reached', round.reached);
@@ -169,7 +176,7 @@ function createRound(stageIndex: number, autoStart = false) {
   renderedTarget = ''; renderedPhase = ''; lastSecond = -1; lastWrittenScore = -1;
   buttons.forEach(b => { b.dataset.key = ''; b.classList.remove('picked', 'wrong', 'cleared'); b.getAnimations().forEach(a => a.cancel()); });
   $('#stage-number').textContent = `${String(stageIndex + 1).padStart(2, '0')} / 05`;
-  $('#stage-name').textContent = round.stage.title;
+  updateStageTitle();
   $('#best').textContent = progress.best[stageIndex] ? `きろく ${progress.best[stageIndex]}泡` : '本日も、よろしく。';
   $('#delivery').innerHTML = ''; $('.dispenser').classList.remove('open');
   $('#reaction-text').textContent = ''; $('#jobs').hidden = true;
@@ -202,8 +209,8 @@ function startImmediately() {
   sound.unlock(); firstInput = false;
   round.start(performance.now()); renderPhase(); renderCards(performance.now());
   if (document.hidden) { round.pause(performance.now()); renderPhase(); }
-  if (round.mode === 'listen') speakTarget();
-  announce(`${round.stage.title}。${round.stage.goal}泡を あつめてください。`);
+  if (round.mode === 'listen' && !speechFallback) speakTarget();
+  announce(`${stageTitle(round.stageIndex, speechFallback)}。${round.stage.goal}泡を あつめてください。`);
 }
 function focusAction() { requestAnimationFrame(() => panel.querySelector<HTMLButtonElement>('.primary')?.focus({ preventScroll: true })); }
 function renderPhase() {
@@ -213,7 +220,12 @@ function renderPhase() {
   panel.hidden = round.phase === 'playing';
   app.dataset.phase = round.phase;
   if (round.phase === 'ready') {
-    panel.innerHTML = `<span class="eyebrow">第 ${round.stageIndex + 1} 選別</span><h2>${round.stage.title}</h2><p>${round.mode === 'listen' ? '声と おなじ絵を えらびます。' : round.mode === 'pictures' ? '文字と おなじ絵を えらびます。' : round.stageIndex === 4 ? 'お題が ときどき変わります。' : `「${WORD[round.target]}」の 札を えらびます。`}<br>30びょうで <b>${round.stage.goal}泡</b>。</p><button id="start" class="primary" ${ready ? '' : 'disabled'}>${ready ? firstInput && !progress.collected.some(Boolean) ? 'はじめる' : 'しごとを はじめる' : '係員を よんでいます…'}<span>→</span></button><small>${round.stageIndex === 0 ? 'かにを とりきると、つぎの束へ。' : '正解すると、札が いれかわります。'}</small>`;
+    const instructions = round.stageIndex === 2
+      ? speechFallback ? '影と おなじ形の絵を えらびます。' : '声と おなじ絵を えらびます。'
+      : round.mode === 'pictures' ? '文字と おなじ絵を えらびます。'
+      : round.stageIndex === 4 ? 'お題が ときどき変わります。'
+      : `「${WORD[round.target]}」の 札を えらびます。`;
+    panel.innerHTML = `<span class="eyebrow">第 ${round.stageIndex + 1} 選別</span><h2>${stageTitle(round.stageIndex, speechFallback)}</h2><p>${instructions}<br>${round.stage.duration / 1000}びょうで <b>${round.stage.goal}泡</b>。</p><button id="start" class="primary" ${ready ? '' : 'disabled'}>${ready ? firstInput && !progress.collected.some(Boolean) ? 'はじめる' : 'しごとを はじめる' : '係員を よんでいます…'}<span>→</span></button><small>${round.stageIndex === 0 ? 'かにを とりきると、つぎの束へ。' : '正解すると、札が いれかわります。'}</small>`;
     $('#start').addEventListener('click', start);
   } else if (round.phase === 'paused') {
     sound.cancelSpeech();
@@ -310,7 +322,11 @@ $('#book-toggle').addEventListener('click', () => book.open());
 buttons.forEach((b, i) => b.addEventListener('click', () => pick(i)));
 function toggleSound() {
   sound.unlock(); sound.muted = !sound.muted; progress.muted = sound.muted; sound.cancelSpeech(); updateSound(); persist();
-  if (round.mode === 'listen') { speechFallback = sound.muted; renderInstruction(); if (!sound.muted && round.phase === 'playing') speakTarget(); }
+  if (round.mode === 'listen') {
+    speechFallback = sound.muted; updateStageTitle(); renderInstruction();
+    if (round.phase === 'ready') { renderedPhase = ''; renderPhase(); }
+    if (!sound.muted && round.phase === 'playing') speakTarget();
+  }
 }
 $('#sound').addEventListener('click', toggleSound);
 $('#entrance-sound').addEventListener('click', toggleSound);

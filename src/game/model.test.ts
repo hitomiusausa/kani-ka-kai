@@ -53,9 +53,9 @@ test('a penalty below goal requires earning back the bubbles before collection',
 });
 test('pause freezes time and input; resuming preserves remaining duration', () => {
   const r = new Round(0, () => 0); r.start(100); r.pause(5100);
-  assert.equal(r.remaining, 25000); assert.equal(r.pick(0, 6000).type, 'ignored');
-  r.tick(999999); assert.equal(r.remaining, 25000);
-  r.resume(1000000); r.tick(1000100); assert.equal(r.remaining, 24900);
+  assert.equal(r.remaining, 20000); assert.equal(r.pick(0, 6000).type, 'ignored');
+  r.tick(999999); assert.equal(r.remaining, 20000);
+  r.resume(1000000); r.tick(1000100); assert.equal(r.remaining, 19900);
 });
 test('every stage can reach its exact goal, target switching cannot deadlock', () => {
   STAGES.forEach((stage, index) => {

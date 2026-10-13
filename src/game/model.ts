@@ -1,15 +1,15 @@
 export type Kind = 'kani' | 'kai';
 export type Mode = 'words' | 'pictures' | 'listen';
 export type Phase = 'ready' | 'playing' | 'paused' | 'result';
-export interface Stage { title: string; target: Kind; mode: Mode; goal: number; item: string; mark: string }
-export const STAGES: Stage[] = [
-  { title: 'はじめの しごと', target: 'kani', mode: 'words', goal: 100, item: 'こむぎこ', mark: '麦' },
-  { title: 'つぎの しごと', target: 'kai', mode: 'words', goal: 140, item: 'たまご', mark: '卵' },
-  { title: 'みみを すます', target: 'kani', mode: 'listen', goal: 160, item: 'パンこ', mark: '粉' },
-  { title: 'えを えらぶ', target: 'kai', mode: 'pictures', goal: 180, item: 'あぶら', mark: '油' },
-  { title: 'かにか、かいか', target: 'kani', mode: 'words', goal: 220, item: 'かにづめ', mark: '爪' },
-];
 export const DURATION = 30_000;
+export interface Stage { title: string; target: Kind; mode: Mode; goal: number; duration: number; item: string; mark: string }
+export const STAGES: Stage[] = [
+  { title: 'はじめの しごと', target: 'kani', mode: 'words', goal: 100, duration: 25_000, item: 'こむぎこ', mark: '麦' },
+  { title: 'つぎの しごと', target: 'kai', mode: 'words', goal: 140, duration: 25_000, item: 'たまご', mark: '卵' },
+  { title: 'みみを すます', target: 'kani', mode: 'listen', goal: 160, duration: DURATION, item: 'パンこ', mark: '粉' },
+  { title: 'えを えらぶ', target: 'kai', mode: 'pictures', goal: 180, duration: DURATION, item: 'あぶら', mark: '油' },
+  { title: 'かにか、かいか', target: 'kani', mode: 'words', goal: 220, duration: DURATION, item: 'かにづめ', mark: '爪' },
+];
 export const CARD_COUNT = 9;
 export const POINTS = 10;
 export const PENALTY = 5;
@@ -35,6 +35,7 @@ export class Round {
   constructor(stageIndex: number, random = Math.random) {
     this.stageIndex = stageIndex;
     this.random = random;
+    this.remaining = this.stage.duration;
     this.target = this.stage.target;
     this.mode = this.stage.mode;
     this.deal();
@@ -56,7 +57,7 @@ export class Round {
   }
   start(now: number) {
     if (this.phase !== 'ready') return;
-    this.phase = 'playing'; this.deadline = now + DURATION;
+    this.phase = 'playing'; this.deadline = now + this.stage.duration;
   }
   tick(now: number) {
     if (this.phase !== 'playing') return;
