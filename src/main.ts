@@ -76,7 +76,7 @@ let countdownTimers: number[] = [];
 let cancelCountIn = () => {};
 let lastWrittenScore = -1;
 let selectedSortCard: number | null = null;
-let dragState: { index: number; pointerId: number; startX: number; startY: number; ghost?: HTMLElement; moved: boolean } | null = null;
+let dragState: { index: number; pointerId: number; startX: number; startY: number; ghost?: HTMLElement; moved: boolean; dropKind?: Kind } | null = null;
 let suppressSortClick = false;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const entrance = new Entrance(sound, () => {
@@ -131,7 +131,7 @@ function renderInstruction() {
   if (key === renderedTarget) return;
   renderedTarget = key;
   if (sortingMode) {
-    instruction.innerHTML = `<div class="order-label">札を いれるところ</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="カニを入れるところ"><span>${paperPicture('kani')}</span><b>かに</b><small>ここへ いれる</small></button><i aria-hidden="true">／</i><button class="sort-bin" data-kind="kai" aria-label="貝を入れるところ"><span>${paperPicture('kai')}</span><b>かい</b><small>ここへ いれる</small></button></div><small class="sort-hint">札を つかんで はこんでね</small>`;
+    instruction.innerHTML = `<div class="order-label">札を いれるところ</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="かにの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><b>かに</b></button><i aria-hidden="true">／</i><button class="sort-bin" data-kind="kai" aria-label="かいの籠"><img src="${import.meta.env.BASE_URL}assets/characters/sorting-basket.webp" alt="" draggable="false"><b>かい</b></button></div><small class="sort-hint">札を つかんで はこんでね</small>`;
     instruction.setAttribute('aria-label', '絵札をカニか貝の受け皿へ運んでください');
     instruction.querySelectorAll<HTMLButtonElement>('.sort-bin').forEach(bin => bin.addEventListener('click', () => {
       if (selectedSortCard !== null) sortCard(selectedSortCard, bin.dataset.kind as Kind);
@@ -327,6 +327,7 @@ function sortMode() { return round.stageIndex === 2 && speechFallback; }
 function onSortPointerDown(index: number, event: PointerEvent) {
   if (!sortMode() || round.phase !== 'playing' || buttons[index].disabled) return;
   dragState = { index, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+  try { buttons[index].setPointerCapture(event.pointerId); } catch { /* The pointer may already have left the card. */ }
 }
 function onSortPointerMove(event: PointerEvent) {
   const state = dragState;
@@ -339,8 +340,13 @@ function onSortPointerMove(event: PointerEvent) {
     state.ghost.classList.add('drag-ghost'); document.body.append(state.ghost);
   }
   state.ghost.style.left = `${event.clientX}px`; state.ghost.style.top = `${event.clientY}px`;
-  const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest('.sort-bin');
-  instruction.querySelectorAll('.sort-bin').forEach(bin => bin.classList.toggle('drop-ready', bin === hovered));
+  const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('.sort-bin');
+  const hit = hovered ?? [...instruction.querySelectorAll<HTMLElement>('.sort-bin')].find(bin => {
+    const r = bin.getBoundingClientRect(), padX = r.width * .08, padY = r.height * .08;
+    return event.clientX >= r.left - padX && event.clientX <= r.right + padX && event.clientY >= r.top - padY && event.clientY <= r.bottom + padY;
+  });
+  state.dropKind = hit?.dataset.kind === 'kani' || hit?.dataset.kind === 'kai' ? hit.dataset.kind : undefined;
+  instruction.querySelectorAll('.sort-bin').forEach(bin => bin.classList.toggle('drop-ready', bin === hit));
 }
 function onSortPointerUp(event: PointerEvent) {
   const state = dragState;
@@ -350,9 +356,15 @@ function onSortPointerUp(event: PointerEvent) {
   if (!state.moved) return;
   suppressSortClick = true; window.setTimeout(() => { suppressSortClick = false; }, 0);
   const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('.sort-bin');
-  if (target?.dataset.kind === 'kani' || target?.dataset.kind === 'kai') sortCard(state.index, target.dataset.kind);
+  const kind = target?.dataset.kind === 'kani' || target?.dataset.kind === 'kai' ? target.dataset.kind : state.dropKind;
+  if (kind === 'kani' || kind === 'kai') sortCard(state.index, kind);
   else say('受け皿まで はこんでね。');
 }
+document.addEventListener('pointercancel', event => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  dragState.ghost?.remove(); dragState = null;
+  instruction.querySelectorAll('.sort-bin').forEach(bin => bin.classList.remove('drop-ready'));
+});
 function clearEnding() {
   endingTimers.forEach(window.clearTimeout); endingTimers = []; ending = false; panel.classList.remove('ending');
 }
