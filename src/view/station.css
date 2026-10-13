@@ -43,6 +43,18 @@
 .order-listen .listen-button>span{font:700 21px/1.3 var(--serif);letter-spacing:.04em}
 .order-listen .speaker-icon{width:29px;height:29px}
 .order-listen .quiet-button{font-size:10px;padding:2px 6px}
+.sort-bins{display:flex;align-items:center;justify-content:center;gap:14px;min-height:65px}
+.sort-bins>i{font:18px Georgia,serif;color:#9b8a70}
+.sort-bin{width:105px;height:62px;display:flex;align-items:center;justify-content:center;gap:7px;padding:5px 9px;background:#e8deca;border:1px solid #c4b397;border-bottom:4px solid #ad9a7c;border-radius:3px;transition:transform .12s,background .12s,border-color .12s;touch-action:manipulation}
+.sort-bin>span{width:48px;height:38px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.sort-bin .paper-kani{width:49px;height:38px;background-size:98px 98px;background-position:0 -11px}
+.sort-bin .paper-kai{width:42px;height:38px;object-fit:contain}
+.sort-bin b{font:700 15px var(--serif);pointer-events:none}
+.sort-bin.drop-ready{background:#f7efdc;border-color:#a4654a;transform:translateY(-2px)}
+.sort-hint{display:block;text-align:center;color:#796a53;font:9px/1.3 var(--serif);letter-spacing:.04em}
+.board.sorting .card{touch-action:none}
+.card.sort-selected{outline:2px solid #9b5d43;outline-offset:2px;transform:translateY(-3px)!important}
+.drag-ghost{position:fixed;z-index:1000;width:clamp(90px,20vw,150px);height:74px;transform:translate(-50%,-55%) rotate(-2deg);pointer-events:none;opacity:.88;box-shadow:0 10px 20px #382d2050!important}
 .time,.score{display:flex;flex-direction:column;align-items:flex-start;gap:5px;justify-content:center;color:#5f533f}
 .time .small-label,.score .small-label{font:10px/1.2 var(--serif);letter-spacing:.12em;margin:0}
 .time>div,.score>div{display:flex;align-items:baseline;gap:5px}
@@ -83,6 +95,7 @@
 @media(max-width:700px){
  .masthead{height:74px;padding:16px 20px;grid-template-columns:1fr auto}.masthead h1{font-size:31px;grid-column:1;grid-row:1;justify-self:start}.station-number{display:none}#sound{grid-column:2;font-size:10px;padding:6px 10px}
  .world{height:175px}.job-note{left:18px;top:4px;max-width:130px;width:auto;background:none;box-shadow:none;padding:0;transform:none;z-index:1}.job-note:before,.job-note-top,.job-note #best{display:none}.job-note #stage-number{font-size:15px;color:#7e6e54}.job-note #stage-name{font-size:10px;line-height:1.4;margin-top:4px}
+ .sort-bins{gap:10px;min-height:60px}.sort-bin{width:102px;height:56px;padding:4px 7px}.sort-bin>span{width:42px}.sort-bin b{font-size:14px}.sort-hint{font-size:8px}
  #crab-stage{height:183px;width:422px;left:42%;bottom:0}.dispenser{right:8px;bottom:0;width:94px;height:78px}#delivery{width:58px;height:70px;top:39%}.mystery-sack{width:58px;height:70px}.mystery-sack span{font-size:22px}
  .desk{min-height:calc(100svh - 249px)}.desk-inner{padding:13px 17px 18px}.game-status{grid-template-columns:1fr 1fr;gap:11px;min-height:0}.instruction{grid-column:1/-1;grid-row:1;min-height:102px;width:min(330px,100%);justify-self:center;padding:11px 21px}.order-subject{min-height:60px;gap:22px}
 .instruction .order-subject strong{font-size:49px}.order-label{font-size:10px}.order-art{height:63px}.time,.score{grid-row:2;gap:2px;flex-direction:row;align-items:baseline}.time{justify-content:flex-start}.score{justify-content:flex-end}.time .small-label,.score .small-label{font-size:9px;margin-right:5px}.time strong,.score strong{font-size:25px}.time>div>span{font-size:9px}.score>div>span{font-size:14px}.under-status{height:29px;font-size:11px}

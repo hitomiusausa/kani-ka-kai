@@ -41,6 +41,17 @@ test('penalties do not alter the cadence of prompt switches', () => {
     assert.equal(r.score, period * 5);
   }
 });
+test('silent sorting accepts the card matching its destination, independent of the spoken target', () => {
+  const r = new Round(2, seeded()); r.start(0);
+  const opposite = r.cards.findIndex(c => c.kind !== r.target);
+  const correct = r.pick(opposite, 100, r.cards[opposite].kind);
+  assert.equal(correct.type, 'correct');
+  assert.equal(r.score, 10);
+  const next = r.cards.findIndex(c => c.kind !== r.target);
+  const wrong = r.pick(next, 500, r.target);
+  assert.equal(wrong.type, 'wrong');
+  assert.equal(r.score, 5);
+});
 test('a penalty below goal requires earning back the bubbles before collection', () => {
   const r = new Round(0, seeded()); r.start(0);
   for (let n = 0; n < 10; n++) r.pick(availableTarget(r, n * 500), n * 500);

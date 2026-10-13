@@ -75,6 +75,9 @@ let preparationTimer = 0;
 let countdownTimers: number[] = [];
 let cancelCountIn = () => {};
 let lastWrittenScore = -1;
+let selectedSortCard: number | null = null;
+let dragState: { index: number; pointerId: number; startX: number; startY: number; ghost?: HTMLElement; moved: boolean } | null = null;
+let suppressSortClick = false;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const entrance = new Entrance(sound, () => {
   // Reveal the playfield under the wave, without spending any round time.
@@ -110,7 +113,7 @@ function say(text: string) {
 }
 function announce(text: string) { $('#announcer').textContent = text; }
 function stageTitle(index: number, silent = index === 2 && sound.muted) {
-  return index === 2 && silent ? 'かげを さがす' : STAGES[index].title;
+  return index === 2 && silent ? 'えを しわける' : STAGES[index].title;
 }
 function updateStageTitle() {
   $('#stage-name').textContent = stageTitle(round.stageIndex, round.stageIndex === 2 && speechFallback);
@@ -123,17 +126,21 @@ function updateInventory() {
   }));
 }
 function renderInstruction() {
-  const key = `${round.target}-${round.mode}-${speechFallback}`;
+  const sortingMode = round.stageIndex === 2 && speechFallback;
+  const key = sortingMode ? 'silent-sort' : `${round.target}-${round.mode}-${speechFallback}`;
   if (key === renderedTarget) return;
   renderedTarget = key;
-  if (round.mode === 'listen' && !speechFallback) {
+  if (sortingMode) {
+    instruction.innerHTML = `<div class="order-label">えを しわける</div><div class="sort-bins"><button class="sort-bin" data-kind="kani" aria-label="カニの受け皿"><span>${paperPicture('kani')}</span><b>かに</b></button><i aria-hidden="true">→</i><button class="sort-bin" data-kind="kai" aria-label="貝の受け皿"><span>${paperPicture('kai')}</span><b>かい</b></button></div><small class="sort-hint">札を運ぶ／札を選んでから受け皿を押す</small>`;
+    instruction.setAttribute('aria-label', '絵札をカニか貝の受け皿へ運んでください');
+    instruction.querySelectorAll<HTMLButtonElement>('.sort-bin').forEach(bin => bin.addEventListener('click', () => {
+      if (selectedSortCard !== null) sortCard(selectedSortCard, bin.dataset.kind as Kind);
+    }));
+  } else if (round.mode === 'listen' && !speechFallback) {
     instruction.innerHTML = `<div class="order-label">えらぶ</div><div class="order-listen"><button id="listen" class="listen-button" aria-label="お題を もういちど聞く">${speaker}<span>もういちど きく</span></button><button id="silent-fallback" class="quiet-button">かげで えらぶ</button></div>`;
     $('#listen').addEventListener('click', speakTarget);
     $('#silent-fallback').addEventListener('click', () => { speechFallback = true; updateStageTitle(); renderInstruction(); });
     instruction.setAttribute('aria-label', '声と おなじ絵を えらんでください');
-  } else if (round.stageIndex === 2 && speechFallback) {
-    instruction.innerHTML = `<div class="order-label">かげを さがす</div><div class="shadow-cue" aria-hidden="true">${paperPicture(round.target)}</div>`;
-    instruction.setAttribute('aria-label', '影と おなじ形の絵を えらんでください');
   } else {
     instruction.innerHTML = round.mode === 'words'
       ? `<div class="order-label">えらぶ</div><div class="cue-pair">${(['kani', 'kai'] as Kind[]).map(kind => `<span class="cue-specimen ${kind === round.target ? 'is-target' : 'is-silhouette'}" aria-hidden="true">${paperPicture(kind)}</span>`).join('')}</div>`
@@ -159,9 +166,11 @@ function renderCards(now: number) {
       b.setAttribute('aria-label', `${i + 1}番 ${WORD[card.kind]}`);
     }
     b.disabled = round.phase !== 'playing' || held || card.collected;
+    b.classList.toggle('sort-selected', selectedSortCard === i);
     if (card.collected || !held) b.classList.toggle('cleared', card.collected);
     if (!held && !card.collected) b.classList.remove('picked', 'wrong');
   });
+  board.classList.toggle('sorting', round.stageIndex === 2 && speechFallback);
   board.classList.toggle('shuffling', round.phase === 'playing' && now < round.shuffleUntil);
 }
 function renderHUD() {
@@ -178,6 +187,7 @@ function renderHUD() {
 function createRound(stageIndex: number, autoStart = false) {
   cancelPreparation(); clearEnding(); sound.cancelSpeech();
   round = new Round(stageIndex); processed = false; speechFallback = sound.muted;
+  selectedSortCard = null; dragState = null;
   renderedTarget = ''; renderedPhase = ''; lastSecond = -1; lastWrittenScore = -1;
   buttons.forEach(b => { b.dataset.key = ''; b.classList.remove('picked', 'wrong', 'cleared'); b.getAnimations().forEach(a => a.cancel()); });
   $('#stage-number').textContent = `${String(stageIndex + 1).padStart(2, '0')} / 05`;
@@ -236,7 +246,7 @@ function renderPhase() {
   app.dataset.phase = round.phase;
   if (round.phase === 'ready') {
     const instructions = round.stageIndex === 2
-      ? speechFallback ? '影と おなじ形の絵を えらびます。' : '声と おなじ絵を えらびます。'
+      ? speechFallback ? '絵札を カニか貝の受け皿へ しわけます。' : '声と おなじ絵を えらびます。'
       : round.mode === 'pictures' ? '文字と おなじ絵を えらびます。'
       : round.stageIndex === 4 ? 'お題が ときどき変わります。'
       : `「${WORD[round.target]}」の 札を えらびます。`;
@@ -281,9 +291,9 @@ function popScore(b: HTMLElement, wrong = false) {
   label.style.left = `${box.left + box.width / 2}px`; label.style.top = `${box.top + 12}px`;
   document.body.append(label); window.setTimeout(() => label.remove(), 700);
 }
-function pick(index: number) {
+function pick(index: number, answer: Kind = round.target) {
   if (entrance.visible || entrance.transitioning || preparing || book.visible) return;
-  const event = round.pick(index, performance.now());
+  const event = round.pick(index, performance.now(), answer);
   if (event.type === 'ignored') return;
   sound.unlock();
   const b = buttons[index];
@@ -300,6 +310,48 @@ function pick(index: number) {
     }
   }
   renderHUD(); renderCards(performance.now());
+}
+function selectSortCard(index: number) {
+  if (round.phase !== 'playing' || round.stageIndex !== 2 || !speechFallback) return;
+  selectedSortCard = index;
+  renderCards(performance.now());
+  say('カニか、貝の受け皿へ。');
+}
+function sortCard(index: number, kind: Kind) {
+  if (round.phase !== 'playing' || round.stageIndex !== 2 || !speechFallback) return;
+  selectedSortCard = null;
+  pick(index, kind);
+  renderCards(performance.now());
+}
+function sortMode() { return round.stageIndex === 2 && speechFallback; }
+function onSortPointerDown(index: number, event: PointerEvent) {
+  if (!sortMode() || round.phase !== 'playing' || buttons[index].disabled) return;
+  dragState = { index, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+}
+function onSortPointerMove(event: PointerEvent) {
+  const state = dragState;
+  if (!state || event.pointerId !== state.pointerId) return;
+  const distance = Math.hypot(event.clientX - state.startX, event.clientY - state.startY);
+  if (!state.moved && distance < 7) return;
+  state.moved = true;
+  if (!state.ghost) {
+    state.ghost = buttons[state.index].cloneNode(true) as HTMLElement;
+    state.ghost.classList.add('drag-ghost'); document.body.append(state.ghost);
+  }
+  state.ghost.style.left = `${event.clientX}px`; state.ghost.style.top = `${event.clientY}px`;
+  const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest('.sort-bin');
+  instruction.querySelectorAll('.sort-bin').forEach(bin => bin.classList.toggle('drop-ready', bin === hovered));
+}
+function onSortPointerUp(event: PointerEvent) {
+  const state = dragState;
+  if (!state || event.pointerId !== state.pointerId) return;
+  dragState = null;
+  state.ghost?.remove(); instruction.querySelectorAll('.sort-bin').forEach(bin => bin.classList.remove('drop-ready'));
+  if (!state.moved) return;
+  suppressSortClick = true; window.setTimeout(() => { suppressSortClick = false; }, 0);
+  const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('.sort-bin');
+  if (target?.dataset.kind === 'kani' || target?.dataset.kind === 'kai') sortCard(state.index, target.dataset.kind);
+  else say('受け皿まで はこんでね。');
 }
 function clearEnding() {
   endingTimers.forEach(window.clearTimeout); endingTimers = []; ending = false; panel.classList.remove('ending');
@@ -334,7 +386,15 @@ const book = new RecipeBook(() => progress, () => {
 $('#entrance-book').addEventListener('click', () => book.open());
 $('#book-toggle').addEventListener('click', () => book.open());
 
-buttons.forEach((b, i) => b.addEventListener('click', () => pick(i)));
+buttons.forEach((b, i) => {
+  b.addEventListener('click', () => {
+    if (suppressSortClick && sortMode()) return;
+    if (sortMode()) selectSortCard(i); else pick(i);
+  });
+  b.addEventListener('pointerdown', e => onSortPointerDown(i, e));
+});
+document.addEventListener('pointermove', onSortPointerMove);
+document.addEventListener('pointerup', onSortPointerUp);
 function toggleSound() {
   sound.unlock(); sound.muted = !sound.muted; progress.muted = sound.muted; sound.cancelSpeech(); updateSound(); persist();
   if (round.mode === 'listen') {
@@ -358,7 +418,7 @@ $('#jobs-toggle').addEventListener('click', () => { $('#jobs').hidden = !$('#job
 window.addEventListener('keydown', e => {
   if (entrance.visible || entrance.transitioning || preparing || book.visible) return;
   if (e.repeat) return;
-  if (round.phase === 'playing' && /^[1-9]$/.test(e.key)) { e.preventDefault(); pick(Number(e.key) - 1); }
+  if (round.phase === 'playing' && /^[1-9]$/.test(e.key)) { e.preventDefault(); sortMode() ? selectSortCard(Number(e.key) - 1) : pick(Number(e.key) - 1); }
   if (e.key === 'Escape' && round.phase === 'playing') { round.pause(performance.now()); renderPhase(); }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { if (preparing) { cancelPreparation(); renderedPhase = ''; } round.pause(performance.now()); renderPhase(); sound.cancelSpeech(); } });

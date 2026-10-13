@@ -64,11 +64,11 @@ export class Round {
     this.remaining = Math.max(0, this.deadline - now);
     if (this.remaining === 0) this.phase = 'result';
   }
-  pick(index: number, now: number): Pick {
+  pick(index: number, now: number, answer: Kind = this.target): Pick {
     this.tick(now);
     const card = this.cards[index];
     if (this.phase !== 'playing' || !card || card.collected || card.availableAt > now) return { type: 'ignored' };
-    if (card.kind !== this.target) {
+    if (card.kind !== answer) {
       this.mistakes++; card.availableAt = now + 650;
       this.score = Math.max(0, this.score - PENALTY);
       return { type: 'wrong', index };
